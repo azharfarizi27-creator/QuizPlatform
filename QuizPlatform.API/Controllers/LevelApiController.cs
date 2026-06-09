@@ -29,27 +29,23 @@ namespace QuizPlatform.API.Controllers
             [FromBody] Level level)
         {
             var identity =
-                (ClaimsIdentity)User.Identity;
+                User.Identity as ClaimsIdentity;
 
             var role =
-                identity.FindFirst("role")?.Value;
+                identity.FindFirst(
+                    ClaimTypes.Role
+                )?.Value;
 
-            // hanya admin
             if (role != "Admin")
                 return Unauthorized();
 
             if (level == null)
-            {
-                return BadRequest(
-                    "Data level wajib diisi"
-                );
-            }
+                return BadRequest("Data level wajib diisi");
 
             service.CreateLevel(level);
 
-            return Ok(
-                "Level berhasil ditambahkan"
-            );
+            return Ok("Level berhasil ditambahkan");
         }
+    
     }
 }

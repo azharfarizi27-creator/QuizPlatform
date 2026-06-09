@@ -1,12 +1,13 @@
-﻿using QuizPlatform.API.Services.Impl;
-using QuizPlatform.API.Services.Interface;
+﻿using QuizPlatform.API.Models.DTO;
+using QuizPlatform.API.Models.Entity;
 using QuizPlatform.API.Models.ViewModel;
+using QuizPlatform.API.Services.Impl;
+using QuizPlatform.API.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Http;
-using QuizPlatform.API.Models.DTO;
 
 namespace QuizPlatform.API.Controllers
 {
@@ -27,6 +28,21 @@ namespace QuizPlatform.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost]
+        [Route("api/Auth/RegisterStudent")]
+        public IHttpActionResult RegisterStudent([FromBody] User user)
+        {
+            if (user == null)
+                return BadRequest("Data kosong");
+
+            user.RoleId = 3; // Student
+            user.IsActive = true;
+
+            service.CreateUser(user);
+
+            return Ok("Register student berhasil");
+        }   
 
 
 

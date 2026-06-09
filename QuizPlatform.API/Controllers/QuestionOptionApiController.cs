@@ -1,6 +1,7 @@
 ﻿using QuizPlatform.API.Models.Entity;
 using QuizPlatform.API.Services.Impl;
 using QuizPlatform.API.Services.Interface;
+using System.Linq;
 using System.Security.Claims;
 using System.Web.Http;
 
@@ -27,17 +28,98 @@ namespace QuizPlatform.API.Controllers
         public IHttpActionResult Create(
             [FromBody] QuestionOption option)
         {
-            var identity = (ClaimsIdentity)User.Identity;
+            var identity =
+                User.Identity as ClaimsIdentity;
 
-            var role = identity.FindFirst(ClaimTypes.Role)?.Value;
+            var role =
+                identity.FindFirst(
+                    ClaimTypes.Role
+                )?.Value;
 
             // hanya Teacher dan Admin
+            if (role != "Teacher" &&
+                role != "Admin")
+            {
+                return Unauthorized();
+            }
+
+            service.CreateQuestionOption(
+                option
+            );
+
+            return Ok(
+                "Option berhasil dibuat"
+            );
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("api/QuestionOption/ByQuestion/{questionId}")]
+        public IHttpActionResult ByQuestion(int questionId)
+        {
+            var result = service.GetAllQuestionOptions()
+                .Where(x => x.QuestionId == questionId)
+                .OrderBy(x => x.OrderNumber)
+                .ToList();
+
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpDelete]
+        [Route("api/QuestionOption/Delete/{optionId}")]
+        public IHttpActionResult Delete(int optionId)
+        {
+            var identity =
+                User.Identity as ClaimsIdentity;
+
+            var role =
+                identity.FindFirst(
+                    ClaimTypes.Role
+                )?.Value;
+
             if (role != "Teacher" && role != "Admin")
                 return Unauthorized();
 
-            service.CreateQuestionOption(option);
+            try
+            {
+                service.DeleteQuestionOption(optionId);
 
-            return Ok("Option berhasil dibuat");
+                return Ok("Jawaban berhasil dihapus");
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpPut]
+        [Route("api/QuestionOption/Update")]
+        public IHttpActionResult Update(
+    [FromBody] QuestionOption option)
+        {
+            var identity =
+                User.Identity as ClaimsIdentity;
+
+            var role =
+                identity.FindFirst(
+                    ClaimTypes.Role
+                )?.Value;
+
+            if (role != "Teacher" &&
+                role != "Admin")
+            {
+                return Unauthorized();
+            }
+
+            service.UpdateQuestionOption(
+                option
+            );
+
+            return Ok(
+                "Jawaban berhasil diupdate"
+            );
         }
     }
 }

@@ -30,7 +30,7 @@ namespace QuizPlatform.API.Services.Interface
 
         List<Quiz> GetAllQuizzes();
 
-        void CreateQuiz(Quiz quiz);
+        Quiz CreateQuiz(Quiz quiz);
 
         List<Question> GetAllQuestions();
 
@@ -52,6 +52,73 @@ namespace QuizPlatform.API.Services.Interface
         void UpdateRanking(int quizId);
 
         QuizResultDto GetQuizResult(int attemptId);
+
+        List<TeacherQuizResultDto>
+    GetTeacherAnalytics();
+
+        DashboardStatsDto
+GetDashboardStats();
+        void RegisterStudent(User user);
+
+        List<Quiz> FilterQuizzes(int categoryId, int difficultyId);
+
+        List<Quiz> GetTeacherQuizzes(int teacherId);
+
+        void DeleteQuestionOption(int optionId);
+
+        void UpdateQuestionOption(
+    QuestionOption option
+);
+        void UpdateQuestion(Question question);
+        void DeleteQuestion(int questionId);
+
+        void PublishQuiz(int quizId);
+
+        void UnpublishQuiz(int quizId);
+
+        void DeleteQuiz(int quizId);
+
+        void UpdateQuiz(Quiz quiz);
+
+        Quiz GetQuizById(int quizId);
+
+        List<QuizHistoryDto> GetStudentQuizHistory(int userId);
+
+        List<TopStudentDto> GetTopStudents();
+
+        StudentProfileStatsDto GetStudentProfileStats(int userId);
+
+        TeacherStatsSummaryDto GetTeacherStatsSummary();
+
+        List<AdminUserDto> GetAdminUsers();
+
+        void ChangeUserRole(ChangeUserRoleDto request);
+
+        void DeleteUser(int userId);
+
+        void ActivateUser(int userId);
+
+        List<Role> GetAllRoles();
+
+        void CreateDifficulty(Difficulty difficulty);
+
+      
+
+        void UpdateProfile(
+            int userId,
+            UpdateProfileDto request
+        );
+
+        void ChangePassword(
+            int userId,
+            ChangePasswordDto request
+        );
+
+        void UpdateProfileImage( int userId, string profileImage);
+
+        List<StudentNotificationDto> GetStudentNotifications(int userId);
+
+
     }
 
 }

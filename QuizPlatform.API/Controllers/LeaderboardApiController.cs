@@ -21,9 +21,10 @@ namespace QuizPlatform.API.Controllers
                 (ClaimsIdentity)User.Identity;
 
             var role =
-                identity.FindFirst("role")?.Value;
+                identity.FindFirst(
+                    ClaimTypes.Role
+                )?.Value;
 
-            // hanya student
             if (role != "Student")
                 return Unauthorized();
 
@@ -45,7 +46,6 @@ namespace QuizPlatform.API.Controllers
         public IHttpActionResult Get(
             int quizId)
         {
-            // semua user login boleh lihat
             var result =
                 service.GetLeaderboard(
                     quizId
@@ -64,9 +64,10 @@ namespace QuizPlatform.API.Controllers
                 (ClaimsIdentity)User.Identity;
 
             var role =
-                identity.FindFirst("role")?.Value;
+                identity.FindFirst(
+                    ClaimTypes.Role
+                )?.Value;
 
-            // hanya admin
             if (role != "Admin")
                 return Unauthorized();
 

@@ -28,8 +28,7 @@ namespace QuizPlatform.API.Models.Entity
 
         public string Thumbnail { get; set; }
 
-        public bool Status { get; set; }
-
+        public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }

@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
 
-namespace QuizPlatform.API.Models.Entity
+namespace QuizPlatform.API.Models.DTO
 {
-    [Table("Users")]
-    public class User
+    public class AdminUserDto
     {
-        [Key]
+
         public int Id { get; set; }
 
         public string FullName { get; set; }
@@ -19,18 +16,12 @@ namespace QuizPlatform.API.Models.Entity
 
         public string Email { get; set; }
 
-        public string PasswordHash { get; set; }
-
         public int RoleId { get; set; }
 
-        public string ProfileImage { get; set; }
+        public string RoleName { get; set; }
 
         public bool IsActive { get; set; }
 
         public DateTime CreatedAt { get; set; }
-
-        public DateTime? UpdatedAt { get; set; }
-
-        public virtual Role Role { get; set; }
     }
 }
