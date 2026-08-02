@@ -12,6 +12,8 @@ namespace QuizPlatform.API.Models.DTO
 
         public int Score { get; set; }
 
+        public int PassingScore { get; set; }
+
         public int TotalCorrect { get; set; }
 
         public int TotalWrong { get; set; }
@@ -21,5 +23,13 @@ namespace QuizPlatform.API.Models.DTO
         public DateTime StartTime { get; set; }
 
         public DateTime EndTime { get; set; }
+
+        public bool? IsPassed { get; set; }
+
+        public string ResultStatus { get; set; }
+
+        public bool HasPendingEssay { get; set; }
+
+        public int PendingEssayCount { get; set; }
     }
 }

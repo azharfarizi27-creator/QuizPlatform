@@ -10,8 +10,8 @@ namespace QuizPlatform.API.Controllers
     public class QuestionOptionApiController
         : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly IQuestionService service =
+            new QuestionService();
 
         [HttpGet]
         [Route("api/QuestionOption/GetAll")]
@@ -121,5 +121,23 @@ namespace QuizPlatform.API.Controllers
                 "Jawaban berhasil diupdate"
             );
         }
+
+
+        [Authorize]
+        [HttpGet]
+        [Route("api/QuestionOption/ByAttemptQuestion/{attemptId}/{questionId}")]
+        public IHttpActionResult ByAttemptQuestion(int attemptId,int questionId)
+        {
+            var result =
+                service.GetOptionsByAttemptQuestion(
+                    attemptId,
+                    questionId
+                );
+
+            return Ok(result);
+        }
     }
+
+
+
 }

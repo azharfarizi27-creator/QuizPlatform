@@ -38,5 +38,25 @@ namespace QuizPlatform.API.Services.Context
         public DbSet<Leaderboard> Leaderboards { get; set; }
 
         public DbSet<Role> Roles { get; set; }
+
+        public DbSet<AttemptQuestion> AttemptQuestions { get; set; }
+
+        public DbSet<AttemptQuestionOption> AttemptQuestionOptions { get; set; }
+
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
+
+        public DbSet<QuestionBank> QuestionBanks { get; set; }
+
+        public DbSet<EmailOtp> EmailOtps { get; set; }
+
+        public DbSet<FriendRequest> FriendRequests { get; set; }
+
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+
+        public DbSet<QuizSuspiciousActivity> QuizSuspiciousActivities { get; set; }
+        public DbSet<StudentNotification> StudentNotifications { get; set; }
+
+        public DbSet<SupportTicket> SupportTickets { get; set; }
+        public DbSet<SupportMessage> SupportMessages { get; set; }
     }
 }

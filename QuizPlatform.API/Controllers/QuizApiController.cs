@@ -11,6 +11,9 @@ namespace QuizPlatform.API.Controllers
         private readonly IQuizService service =
             new QuizService();
 
+        private readonly IActivityLogService activityLogService =
+            new ActivityLogService();
+
         [Authorize]
         [HttpGet]
         [Route("api/quiz/get")]
@@ -32,26 +35,31 @@ namespace QuizPlatform.API.Controllers
         [Route("api/Quiz/Create")]
         public IHttpActionResult Create([FromBody] Quiz quiz)
         {
+            if (!IsTeacherOrAdmin())
+                return Unauthorized();
+
+            if (quiz == null)
+                return BadRequest("Data quiz kosong");
+
             try
             {
-                var identity = User.Identity as ClaimsIdentity;
+                var userId =
+                    GetLoginUserId();
 
-                var role = identity.FindFirst(ClaimTypes.Role)?.Value;
-
-                if (role != "Teacher" && role != "Admin")
-                    return Unauthorized();
-
-                var userIdClaim =
-                    identity.FindFirst("UserId") ??
-                    identity.FindFirst("Id") ??
-                    identity.FindFirst(ClaimTypes.NameIdentifier);
-
-                if (userIdClaim == null)
+                if (userId == null)
                     return BadRequest("UserId tidak ditemukan di token");
 
-                quiz.CreatedBy = int.Parse(userIdClaim.Value);
+                quiz.CreatedBy =
+                    userId.Value;
 
-                var result = service.CreateQuiz(quiz);
+                var result =
+                    service.CreateQuiz(quiz);
+
+                activityLogService.CreateActivityLog(
+                    userId,
+                    "CREATE_QUIZ",
+                    "Teacher/Admin membuat quiz: " + quiz.Title
+                );
 
                 return Ok(result);
             }
@@ -60,12 +68,14 @@ namespace QuizPlatform.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
         [Authorize]
         [HttpGet]
         [Route("api/Quiz/Filter")]
         public IHttpActionResult Filter(
-    int categoryId,
-    int difficultyId)
+            int categoryId,
+            int difficultyId
+        )
         {
             var result =
                 service.FilterQuizzes(
@@ -81,41 +91,50 @@ namespace QuizPlatform.API.Controllers
         [Route("api/Quiz/MyQuizzes")]
         public IHttpActionResult MyQuizzes()
         {
-            var identity =
-                User.Identity as ClaimsIdentity;
-
-            var role =
-                identity.FindFirst(ClaimTypes.Role)?.Value;
-
-            if (role != "Teacher" && role != "Admin")
+            if (!IsTeacherOrAdmin())
                 return Unauthorized();
 
-            var userIdClaim =
-                identity.FindFirst("UserId") ??
-                identity.FindFirst("Id") ??
-                identity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId =
+                GetLoginUserId();
 
-            if (userIdClaim == null)
+            if (userId == null)
                 return BadRequest("UserId tidak ditemukan");
 
             var result =
                 service.GetTeacherQuizzes(
-                    int.Parse(userIdClaim.Value)
+                    userId.Value
                 );
 
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpGet]
+        [Route("api/Quiz/ValidatePublish/{quizId}")]
+        public IHttpActionResult ValidatePublish(int quizId)
+        {
+            if (!IsTeacherOrAdmin())
+                return Unauthorized();
+
+            try
+            {
+                var result =
+                    service.ValidateQuizBeforePublish(quizId);
+
+                return Ok(result);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [Authorize]
         [HttpPost]
         [Route("api/Quiz/Publish/{quizId}")]
         public IHttpActionResult Publish(int quizId)
         {
-            var identity = User.Identity as ClaimsIdentity;
-            var role = identity.FindFirst(ClaimTypes.Role)?.Value;
-
-            if (role != "Teacher" && role != "Admin")
+            if (!IsTeacherOrAdmin())
                 return Unauthorized();
 
             try
@@ -135,25 +154,29 @@ namespace QuizPlatform.API.Controllers
         [Route("api/Quiz/Unpublish/{quizId}")]
         public IHttpActionResult Unpublish(int quizId)
         {
-            var identity =
-                User.Identity as ClaimsIdentity;
-
-            var role =
-                identity.FindFirst(
-                    ClaimTypes.Role
-                )?.Value;
-
-            if (role != "Teacher" &&
-                role != "Admin")
-            {
+            if (!IsTeacherOrAdmin())
                 return Unauthorized();
+
+            try
+            {
+                var quiz =
+                    service.GetQuizById(quizId);
+
+                service.UnpublishQuiz(quizId);
+
+                activityLogService.CreateActivityLog(
+                    GetLoginUserId(),
+                    "UNPUBLISH_QUIZ",
+                    "Teacher/Admin unpublish quiz: " +
+                    (quiz?.Title ?? "ID " + quizId)
+                );
+
+                return Ok("Quiz berhasil di-unpublish");
             }
-
-            service.UnpublishQuiz(quizId);
-
-            return Ok(
-                "Quiz berhasil di-unpublish"
-            );
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [Authorize]
@@ -161,25 +184,29 @@ namespace QuizPlatform.API.Controllers
         [Route("api/Quiz/Delete/{quizId}")]
         public IHttpActionResult Delete(int quizId)
         {
-            var identity =
-                User.Identity as ClaimsIdentity;
-
-            var role =
-                identity.FindFirst(
-                    ClaimTypes.Role
-                )?.Value;
-
-            if (role != "Teacher" &&
-                role != "Admin")
-            {
+            if (!IsTeacherOrAdmin())
                 return Unauthorized();
+
+            try
+            {
+                var quiz =
+                    service.GetQuizById(quizId);
+
+                service.DeleteQuiz(quizId);
+
+                activityLogService.CreateActivityLog(
+                    GetLoginUserId(),
+                    "DELETE_QUIZ",
+                    "Teacher/Admin menghapus quiz: " +
+                    (quiz?.Title ?? "ID " + quizId)
+                );
+
+                return Ok("Quiz berhasil dihapus");
             }
-
-            service.DeleteQuiz(quizId);
-
-            return Ok(
-                "Quiz berhasil dihapus"
-            );
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [Authorize]
@@ -187,15 +214,22 @@ namespace QuizPlatform.API.Controllers
         [Route("api/Quiz/Update")]
         public IHttpActionResult Update([FromBody] Quiz quiz)
         {
-            var identity = User.Identity as ClaimsIdentity;
-            var role = identity.FindFirst(ClaimTypes.Role)?.Value;
-
-            if (role != "Teacher" && role != "Admin")
+            if (!IsTeacherOrAdmin())
                 return Unauthorized();
+
+            if (quiz == null)
+                return BadRequest("Data quiz kosong");
 
             try
             {
                 service.UpdateQuiz(quiz);
+
+                activityLogService.CreateActivityLog(
+                    GetLoginUserId(),
+                    "UPDATE_QUIZ",
+                    "Teacher/Admin mengupdate quiz: " +
+                    quiz.Title
+                );
 
                 return Ok("Quiz berhasil diupdate");
             }
@@ -210,12 +244,52 @@ namespace QuizPlatform.API.Controllers
         [Route("api/Quiz/GetById/{quizId}")]
         public IHttpActionResult GetById(int quizId)
         {
-            var result = service.GetQuizById(quizId);
+            var result =
+                service.GetQuizById(quizId);
 
             if (result == null)
                 return BadRequest("Quiz tidak ditemukan");
 
             return Ok(result);
+        }
+
+        private bool IsTeacherOrAdmin()
+        {
+            var identity =
+                User.Identity as ClaimsIdentity;
+
+            if (identity == null)
+                return false;
+
+            var role =
+                identity.FindFirst(ClaimTypes.Role)?.Value;
+
+            return role == "Teacher" ||
+                   role == "Admin";
+        }
+
+        private int? GetLoginUserId()
+        {
+            var identity =
+                User.Identity as ClaimsIdentity;
+
+            if (identity == null)
+                return null;
+
+            var userIdClaim =
+                identity.FindFirst("UserId") ??
+                identity.FindFirst("Id") ??
+                identity.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+                return null;
+
+            int userId;
+
+            if (!int.TryParse(userIdClaim.Value, out userId))
+                return null;
+
+            return userId;
         }
     }
 }

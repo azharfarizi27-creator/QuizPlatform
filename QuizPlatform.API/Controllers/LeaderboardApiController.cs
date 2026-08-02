@@ -8,8 +8,9 @@ namespace QuizPlatform.API.Controllers
 {
     public class LeaderboardApiController : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly IQuizAttemptService service =
+            new QuizAttemptService();
+
 
         [Authorize]
         [HttpPost]

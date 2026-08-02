@@ -8,16 +8,16 @@ namespace QuizPlatform.API.Controllers
 {
     public class LevelApiController : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly ILookupService service =
+            new LookupService();
 
         [Authorize]
         [HttpGet]
         [Route("api/Level/GetAllLevels")]
         public IHttpActionResult GetAllLevels()
         {
-            // semua user yang login boleh lihat
-            var result = service.GetAllLevels();
+            var result =
+                service.GetAllLevels();
 
             return Ok(result);
         }
@@ -26,15 +26,16 @@ namespace QuizPlatform.API.Controllers
         [HttpPost]
         [Route("api/Level/CreateLevel")]
         public IHttpActionResult CreateLevel(
-            [FromBody] Level level)
+            [FromBody] Level level
+        )
         {
             var identity =
                 User.Identity as ClaimsIdentity;
 
             var role =
-                identity.FindFirst(
-                    ClaimTypes.Role
-                )?.Value;
+                identity?
+                    .FindFirst(ClaimTypes.Role)
+                    ?.Value;
 
             if (role != "Admin")
                 return Unauthorized();
@@ -42,10 +43,16 @@ namespace QuizPlatform.API.Controllers
             if (level == null)
                 return BadRequest("Data level wajib diisi");
 
-            service.CreateLevel(level);
+            try
+            {
+                service.CreateLevel(level);
 
-            return Ok("Level berhasil ditambahkan");
+                return Ok("Level berhasil ditambahkan");
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
-    
     }
 }

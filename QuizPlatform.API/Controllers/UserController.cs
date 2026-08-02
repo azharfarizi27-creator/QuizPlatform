@@ -10,12 +10,14 @@ namespace QuizPlatform.API.Controllers
 {
     public class UserController : Controller
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly IAdminService adminService =
+     new AdminService();
+
+
 
         public ActionResult Index()
         {
-            var users = service.GetAllUser();
+            var users = adminService.GetAllUser();
 
             return View(users);
         }

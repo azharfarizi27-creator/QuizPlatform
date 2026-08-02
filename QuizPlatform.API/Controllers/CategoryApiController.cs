@@ -8,14 +8,15 @@ namespace QuizPlatform.API.Controllers
 {
     public class CategoryApiController : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly ILookupService service =
+            new LookupService();
 
         [HttpGet]
         [Route("api/Category/GetAllCategories")]
         public IHttpActionResult GetAllCategories()
         {
-            var result = service.GetAllCategories();
+            var result =
+                service.GetAllCategories();
 
             return Ok(result);
         }
@@ -24,32 +25,33 @@ namespace QuizPlatform.API.Controllers
         [HttpPost]
         [Route("api/Category/CreateCategory")]
         public IHttpActionResult CreateCategory(
-            [FromBody] Category category)
+            [FromBody] Category category
+        )
         {
             var identity =
                 User.Identity as ClaimsIdentity;
 
             var role =
-                identity.FindFirst(
-                    ClaimTypes.Role
-                )?.Value;
+                identity?
+                    .FindFirst(ClaimTypes.Role)
+                    ?.Value;
 
             if (role != "Admin")
                 return Unauthorized();
 
             if (category == null)
+                return BadRequest("Data category wajib diisi");
+
+            try
             {
-                return BadRequest(
-                    "Data category wajib diisi"
-                );
+                service.CreateCategory(category);
+
+                return Ok("Category berhasil ditambahkan");
             }
-
-            service.CreateCategory(category);
-
-            return Ok(
-                "Category berhasil ditambahkan"
-            );
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
-   
     }
 }

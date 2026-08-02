@@ -25,5 +25,8 @@ namespace QuizPlatform.API.Models.Entity
         public int OrderNumber { get; set; }
 
         public DateTime CreatedAt { get; set; }
+
+        public int? QuestionBankId { get; set; }
+
     }
 }

@@ -1,27 +1,35 @@
-﻿using QuizPlatform.API.Models.Entity;
+﻿using QuizPlatform.API.Models.Dtos;
+using QuizPlatform.API.Models.Entity;
 using QuizPlatform.API.Services.Impl;
 using QuizPlatform.API.Services.Interface;
-using System.Linq;
-using System.Security.Claims;
-using System.Web.Http;
 using System;
 using System.IO;
-using System.Net.Http;
+using System.Linq;
+using System.Security.Claims;
 using System.Web;
+using System.Web.Http;
 
 namespace QuizPlatform.API.Controllers
 {
     public class QuestionApiController : ApiController
     {
-        private readonly IQuizService service =
+        private readonly IQuestionService questionService =
+            new QuestionService();
+
+        private readonly IQuestionBankService questionBankService =
+            new QuestionBankService();
+
+        private readonly IQuizService quizService =
             new QuizService();
+
+        
 
         [HttpGet]
         [Route("api/Question/GetAll")]
         public IHttpActionResult GetAll()
         {
             return Ok(
-                service.GetAllQuestions()
+                questionService.GetAllQuestions()
             );
         }
 
@@ -29,45 +37,43 @@ namespace QuizPlatform.API.Controllers
         [HttpPost]
         [Route("api/Question/Create")]
         public IHttpActionResult Create(
-            [FromBody] Question question)
+            [FromBody] Question question
+        )
         {
-            var identity =
-                User.Identity as ClaimsIdentity;
-
             var role =
-                identity.FindFirst(
-                    ClaimTypes.Role
-                )?.Value;
+                GetRole();
 
-            if (role != "Teacher" &&
-                role != "Admin")
-            {
+            if (role != "Teacher" && role != "Admin")
                 return Unauthorized();
+
+            try
+            {
+                questionService.CreateQuestion(question);
+
+                return Ok("Question berhasil dibuat");
             }
-
-            service.CreateQuestion(
-                question
-            );
-
-            return Ok(
-                "Question berhasil dibuat"
-            );
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
+
         [Authorize]
         [HttpGet]
         [Route("api/Question/ByQuiz/{quizId}")]
         public IHttpActionResult ByQuiz(
-    int quizId)
+            int quizId
+        )
         {
             var result =
-                service.GetAllQuestions()
-                .Where(x =>
-                    x.QuizId == quizId
-                )
-                .OrderBy(x =>
-                    x.OrderNumber
-                )
-                .ToList();
+                questionService.GetAllQuestions()
+                    .Where(x =>
+                        x.QuizId == quizId
+                    )
+                    .OrderBy(x =>
+                        x.OrderNumber
+                    )
+                    .ToList();
 
             return Ok(result);
         }
@@ -75,20 +81,23 @@ namespace QuizPlatform.API.Controllers
         [Authorize]
         [HttpPut]
         [Route("api/Question/Update")]
-        public IHttpActionResult Update([FromBody] Question question)
+        public IHttpActionResult Update(
+            [FromBody] Question question
+        )
         {
-            var identity = User.Identity as ClaimsIdentity;
-            var role = identity.FindFirst(ClaimTypes.Role)?.Value;
+            var role =
+                GetRole();
 
             if (role != "Teacher" && role != "Admin")
                 return Unauthorized();
 
             try
             {
-                service.UpdateQuestion(question);
+                questionService.UpdateQuestion(question);
+
                 return Ok("Soal berhasil diupdate");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -97,20 +106,23 @@ namespace QuizPlatform.API.Controllers
         [Authorize]
         [HttpDelete]
         [Route("api/Question/Delete/{questionId}")]
-        public IHttpActionResult Delete(int questionId)
+        public IHttpActionResult Delete(
+            int questionId
+        )
         {
-            var identity = User.Identity as ClaimsIdentity;
-            var role = identity.FindFirst(ClaimTypes.Role)?.Value;
+            var role =
+                GetRole();
 
             if (role != "Teacher" && role != "Admin")
                 return Unauthorized();
 
             try
             {
-                service.DeleteQuestion(questionId);
+                questionService.DeleteQuestion(questionId);
+
                 return Ok("Soal berhasil dihapus");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -121,19 +133,11 @@ namespace QuizPlatform.API.Controllers
         [Route("api/Question/UploadImage")]
         public IHttpActionResult UploadImage()
         {
-            var identity =
-                User.Identity as ClaimsIdentity;
-
             var role =
-                identity.FindFirst(
-                    ClaimTypes.Role
-                )?.Value;
+                GetRole();
 
-            if (role != "Teacher" &&
-                role != "Admin")
-            {
+            if (role != "Teacher" && role != "Admin")
                 return Unauthorized();
-            }
 
             var request =
                 HttpContext.Current.Request;
@@ -152,7 +156,7 @@ namespace QuizPlatform.API.Controllers
 
             var extension =
                 Path.GetExtension(file.FileName)
-                .ToLower();
+                    .ToLower();
 
             var allowedExtensions =
                 new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
@@ -185,5 +189,183 @@ namespace QuizPlatform.API.Controllers
             });
         }
 
+        [Authorize]
+        [HttpGet]
+        [Route("api/Question/ByAttempt/{attemptId}")]
+        public IHttpActionResult ByAttempt(
+            int attemptId
+        )
+        {
+            var result =
+                questionService.GetQuestionsByAttempt(
+                    attemptId
+                );
+
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("api/Question/ByBank/{bankId}")]
+        public IHttpActionResult ByBank(
+            int bankId
+        )
+        {
+            var role =
+                GetRole();
+
+            if (role != "Teacher" && role != "Admin")
+                return Unauthorized();
+
+            var result =
+                questionBankService.GetQuestionsByBank(bankId);
+
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("api/Question/CopyToQuiz/{questionId}/{quizId}")]
+        public IHttpActionResult CopyToQuiz(
+            int questionId,
+            int quizId
+        )
+        {
+            var role =
+                GetRole();
+
+            if (role != "Teacher" && role != "Admin")
+                return Unauthorized();
+
+            try
+            {
+                var result =
+                    questionBankService.CopyQuestionToQuiz(
+                        questionId,
+                        quizId
+                    );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("api/Question/CopyRandomFromBank")]
+        public IHttpActionResult CopyRandomFromBank(
+            [FromBody] CopyRandomQuestionDto request
+        )
+        {
+            var role =
+                GetRole();
+
+            if (role != "Teacher" && role != "Admin")
+                return Unauthorized();
+
+            try
+            {
+                var copiedCount =
+                    questionBankService.CopyRandomQuestionsFromBankToQuiz(
+                        request
+                    );
+
+                return Ok(
+                    copiedCount + " soal berhasil ditambahkan ke quiz"
+                );
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("api/Quiz/Validate/{quizId}")]
+        public IHttpActionResult Validate(
+            int quizId
+        )
+        {
+            var role =
+                GetRole();
+
+            if (role != "Teacher" && role != "Admin")
+                return Unauthorized();
+
+            try
+            {
+                var result =
+                    quizService.ValidateQuizBeforePublish(
+                        quizId
+                    );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        private string GetRole()
+        {
+            var identity =
+                User.Identity as ClaimsIdentity;
+
+            return identity?
+                .FindFirst(ClaimTypes.Role)
+                ?.Value;
+        }
+
+
+        [Authorize]
+        [HttpPost]
+        [Route("api/Question/ImportExcel")]
+        public IHttpActionResult ImportExcel(
+        [FromBody] ImportQuestionExcelRequestDto request
+        )
+        {
+            var identity =
+                User.Identity as ClaimsIdentity;
+
+            if (identity == null)
+                return Unauthorized();
+
+            var role =
+                identity.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (
+                role != "Teacher" &&
+                role != "Admin"
+            )
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var importedCount =
+                    questionService.ImportQuestionsFromExcel(request);
+
+                return Ok(
+                    new
+                    {
+                        Message =
+                            "Import soal berhasil",
+
+                        ImportedCount =
+                            importedCount
+                    }
+                );
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

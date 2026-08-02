@@ -8,8 +8,8 @@ namespace QuizPlatform.API.Controllers
 {
     public class DifficultyApiController : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly ILookupService service =
+            new LookupService();
 
         [Authorize]
         [HttpGet]
@@ -26,15 +26,16 @@ namespace QuizPlatform.API.Controllers
         [HttpPost]
         [Route("api/Difficulty/Create")]
         public IHttpActionResult Create(
-    [FromBody] Difficulty difficulty)
+            [FromBody] Difficulty difficulty
+        )
         {
             var identity =
                 User.Identity as ClaimsIdentity;
 
             var role =
-                identity.FindFirst(
-                    ClaimTypes.Role
-                )?.Value;
+                identity?
+                    .FindFirst(ClaimTypes.Role)
+                    ?.Value;
 
             if (role != "Admin")
                 return Unauthorized();
@@ -42,9 +43,16 @@ namespace QuizPlatform.API.Controllers
             if (difficulty == null)
                 return BadRequest("Data difficulty wajib diisi");
 
-            service.CreateDifficulty(difficulty);
+            try
+            {
+                service.CreateDifficulty(difficulty);
 
-            return Ok("Difficulty berhasil ditambahkan");
+                return Ok("Difficulty berhasil ditambahkan");
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -12,8 +12,9 @@ namespace QuizPlatform.API.Controllers
     public class StudentApiController : ApiController
     {
 
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly IProfileService profileService = 
+            new ProfileService();
+
 
         [Authorize]
         [HttpGet]
@@ -38,7 +39,7 @@ namespace QuizPlatform.API.Controllers
                 );
 
             var result =
-                service.GetStudentProfileStats(
+                profileService.GetStudentProfileStats(
                     userId
                 );
 
@@ -64,7 +65,7 @@ namespace QuizPlatform.API.Controllers
                     userIdClaim.Value
                 );
             var result =
-                service.GetStudentNotifications(
+                profileService.GetStudentNotifications(
                     userId
                 );
             return Ok(result);

@@ -7,8 +7,8 @@ namespace QuizPlatform.API.Controllers
 {
     public class RoleApiController : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly IAdminService service =
+            new AdminService();
 
         [Authorize]
         [HttpGet]

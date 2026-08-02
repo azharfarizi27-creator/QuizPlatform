@@ -9,8 +9,11 @@ namespace QuizPlatform.API.Controllers
     public class UserAnswerApiController
         : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
+        private readonly IQuestionService questionService =
+            new QuestionService();
+
+        private readonly IQuizAttemptService attemptService =
+            new QuizAttemptService();
 
         [Authorize]
         [HttpPost]
@@ -30,7 +33,7 @@ namespace QuizPlatform.API.Controllers
             if (role != "Student")
                 return Unauthorized();
 
-            service.SubmitAnswer(
+            attemptService.SubmitAnswer(
                 answer
             );
 

@@ -32,5 +32,11 @@ namespace QuizPlatform.API.Models.Entity
         public DateTime? UpdatedAt { get; set; }
 
         public virtual Role Role { get; set; }
+
+        public string ResetPasswordToken { get; set; }
+
+        public DateTime? ResetPasswordExpired { get; set; }
+
+        public bool EmailVerified { get; set; }
     }
 }

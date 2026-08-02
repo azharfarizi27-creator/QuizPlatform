@@ -13,9 +13,9 @@ namespace QuizPlatform.API.Controllers
     public class DashboardApiController
             : ApiController
     {
-        private readonly IQuizService service =
-            new QuizService();
-
+        private readonly IAdminService service =
+            new AdminService();
+        
         [Authorize]
         [HttpGet]
         [Route("api/Dashboard/Stats")]
